@@ -1,12 +1,15 @@
 * What we don't like/want to fix [0/3]
 
-** TODO UI [0/3]
-*** TODO State [0/2]
-**** TODO fix manually passing state to each component
-**** TODO pass only the required state (not the whole global state obj)
+** TODO UI [1/4]
 *** TODO make components composable (concat two components with same API)
 *** TODO fix manually passing dispatch to each component
 *** TODO refactor into focused files
+*** DONE State [2/2]
+    CLOSED: [2020-06-19 Fri 13:06]
+**** DONE fix manually passing state to each component
+     CLOSED: [2020-06-19 Fri 13:06]
+**** DONE pass only the required state (not the whole global state obj)
+     CLOSED: [2020-06-19 Fri 13:06]
 
 ** TODO State management [0/3]
 *** TODO Break into module reducers
