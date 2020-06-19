@@ -1,0 +1,16 @@
+* What we don't like/want to fix [0/3]
+
+** TODO UI [0/3]
+*** TODO State [0/2]
+**** TODO fix manually passing state to each component
+**** TODO pass only the required state (not the whole global state obj)
+*** TODO make components composable (concat two components with same API)
+*** TODO fix manually passing dispatch to each component
+*** TODO refactor into focused files
+
+** TODO State management [0/3]
+*** TODO Break into module reducers
+*** TODO allow for "patching" using Merge
+*** TODO allow for composability of reducers
+
+** TODO Figure out unit testing
