@@ -121,7 +121,7 @@ const state = {
 };
 
 const rerender = (state, dispatch) =>
-  nanomorph(app, wholeApp.render({ state, dispatch }));
+  nanomorph(app, wholeApp.render(state, dispatch));
 
 const dispatch = (event) => {
   const newState = reduce(state, event);
