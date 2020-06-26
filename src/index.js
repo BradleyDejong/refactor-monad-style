@@ -12,11 +12,13 @@ const View = (render) => ({
         ${render(state, dispatch)} ${otherView.render(state, dispatch)}
       `
     ),
+    chain: (otherViewFn) => View((state,dispatch) => otherViewFn(render(state,dispatch)).render(state,dispatch)),
+    map: mapFn => View((state,distach) => mapFn(render(state,dispatch))),
 });
 
 View.empty = View((state, dispatch) => html``);
 
-const header = () => html`<h1>World's best app</h1>`;
+const header = View(() => html`<h1>World's best app</h1>`);
 
 const renderRefresh = View(
   (lastUpdated, dispatch) => html`
@@ -49,25 +51,38 @@ const renderDecorations = View(
   `
 );
 
+const renderTotalClicks = View(
+    (totalClicks,dispatch) => html`
+    <div>Total clicks:</div>
+    <div>${totalClicks}</div>
+    `
+);
+
+const makeBlinky = someView => someView.chain(someViewHtml => View((state,dispatch) => html`
+  <i>${someViewHtml}</i>
+`));
+
+const makeGreenText = v => {v.classList.add('mapclass'); return v;};
+
 const children = [
-  renderRefresh.contramap((s) => s.lastUpdated),
+    renderRefresh.contramap((s) => s.lastUpdated),
   renderClicky.contramap((s) => s.clicks),
-  renderDecorations.contramap((s) => undefined),
+    makeBlinky(renderDecorations.contramap((s) => undefined)).map(makeGreenText),
+  renderTotalClicks.contramap((s) => s.totalClicks),
 ];
 
-const refreshAndClicky = children.reduce(concat, View.empty);
+const contentViews = children.reduce(concat, View.empty);
 
-const content = (state, dispatch) => html`
+const content = contentViews.chain(allViewsHtml => View((state, dispatch) => html`
   <div id="content" class="content">
-    ${refreshAndClicky.render(state, dispatch)}
-    <div>Total clicks:</div>
-    <div>${state.totalClicks}</div>
+     ${allViewsHtml}
   </div>
-`;
+`));
+
 
 const wholeApp = View(
   ({ state, dispatch }) => html`<div id="app">
-    ${header(state, dispatch)} ${content(state, dispatch)}
+    ${header.concat(content).render(state,dispatch)}
   </div>`
 );
 
