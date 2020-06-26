@@ -21,8 +21,8 @@
     ]
   },
   "dependencies": {
-    "morphdom": "^2.6.1",
     "nanohtml": "^1.9.1",
+    "nanomorph": "^5.4.1",
     "ramda": "^0.27.0"
   }
 }

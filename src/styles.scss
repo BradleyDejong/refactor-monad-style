@@ -31,6 +31,9 @@ $melon: #ffa69e;
   }
 }
 
+.mapclass {
+    color: green;
+}
 button {
   border: none;
   background: $powder-blue;
@@ -38,7 +41,7 @@ button {
   background: rgba;
   padding: 0.5em 1em;
   border-radius: 2px;
-  transition: background 140ms ease-out;
+  transition: background 340ms ease-out;
 
   &:active {
     transition: none;
