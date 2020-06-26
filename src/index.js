@@ -1,5 +1,6 @@
 import html from "nanohtml";
 import nanomorph from "nanomorph";
+import { concat } from "ramda";
 
 const View = (render) => ({
   render: render,
@@ -13,16 +14,20 @@ const View = (render) => ({
     ),
 });
 
+View.empty = View((state, dispatch) => html``);
+
 const header = () => html`<h1>World's best app</h1>`;
 
-const renderRefresh = (lastUpdated, dispatch) => html`
-  <div>
-    Last updated at ${lastUpdated.toLocaleString()}.
-  </div>
-  <button onclick=${() => dispatch("update")}>
-    Click To Update
-  </button>
-`;
+const renderRefresh = View(
+  (lastUpdated, dispatch) => html`
+    <div>
+      Last updated at ${lastUpdated.toLocaleString()}.
+    </div>
+    <button onclick=${() => dispatch("update")}>
+      Click To Update
+    </button>
+  `
+);
 
 const renderClicky = View(
   (clicks, dispatch) => html`
@@ -44,10 +49,13 @@ const renderDecorations = View(
   `
 );
 
-const refreshAndClicky = View(renderRefresh)
-  .contramap((s) => s.lastUpdated)
-  .concat(renderClicky.contramap((s) => s.clicks))
-  .concat(renderDecorations.contramap((s) => undefined));
+const children = [
+  renderRefresh.contramap((s) => s.lastUpdated),
+  renderClicky.contramap((s) => s.clicks),
+  renderDecorations.contramap((s) => undefined),
+];
+
+const refreshAndClicky = children.reduce(concat, View.empty);
 
 const content = (state, dispatch) => html`
   <div id="content" class="content">
