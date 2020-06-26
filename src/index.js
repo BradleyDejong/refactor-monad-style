@@ -12,8 +12,11 @@ const View = (render) => ({
         ${render(state, dispatch)} ${otherView.render(state, dispatch)}
       `
     ),
-    chain: (otherViewFn) => View((state,dispatch) => otherViewFn(render(state,dispatch)).render(state,dispatch)),
-    map: mapFn => View((state,distach) => mapFn(render(state,dispatch))),
+  chain: (otherViewFn) =>
+    View((state, dispatch) =>
+      otherViewFn(render(state, dispatch)).render(state, dispatch)
+    ),
+  map: (mapFn) => View((state, distach) => mapFn(render(state, dispatch))),
 });
 
 View.empty = View((state, dispatch) => html``);
@@ -52,37 +55,44 @@ const renderDecorations = View(
 );
 
 const renderTotalClicks = View(
-    (totalClicks,dispatch) => html`
+  (totalClicks, dispatch) => html`
     <div>Total clicks:</div>
     <div>${totalClicks}</div>
-    `
+  `
 );
 
-const makeBlinky = someView => someView.chain(someViewHtml => View((state,dispatch) => html`
-  <i>${someViewHtml}</i>
-`));
+const makeBlinky = (someView) =>
+  someView.chain((someViewHtml) =>
+    View((state, dispatch) => html` <i>${someViewHtml}</i> `)
+  );
 
-const makeGreenText = v => {v.classList.add('mapclass'); return v;};
+const makeGreenText = (v) => {
+  v.classList.add("mapclass");
+  return v;
+};
 
 const children = [
-    renderRefresh.contramap((s) => s.lastUpdated),
+  renderRefresh.contramap((s) => s.lastUpdated),
   renderClicky.contramap((s) => s.clicks),
-    makeBlinky(renderDecorations.contramap((s) => undefined)).map(makeGreenText),
+  makeBlinky(renderDecorations.contramap((s) => undefined)).map(makeGreenText),
   renderTotalClicks.contramap((s) => s.totalClicks),
 ];
 
 const contentViews = children.reduce(concat, View.empty);
 
-const content = contentViews.chain(allViewsHtml => View((state, dispatch) => html`
-  <div id="content" class="content">
-     ${allViewsHtml}
-  </div>
-`));
-
+const content = contentViews.chain((allViewsHtml) =>
+  View(
+    (state, dispatch) => html`
+      <div id="content" class="content">
+        ${allViewsHtml}
+      </div>
+    `
+  )
+);
 
 const wholeApp = View(
   ({ state, dispatch }) => html`<div id="app">
-    ${header.concat(content).render(state,dispatch)}
+    ${header.concat(content).render(state, dispatch)}
   </div>`
 );
 
