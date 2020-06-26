@@ -90,11 +90,9 @@ const content = contentViews.chain((allViewsHtml) =>
   )
 );
 
-const wholeApp = View(
-  ({ state, dispatch }) => html`<div id="app">
-    ${header.concat(content).render(state, dispatch)}
-  </div>`
-);
+const wholeApp = header
+  .concat(content)
+  .chain((x) => View(() => html`<div id="app">${x}</div>`));
 
 const reduce = (state, event) => {
   if (event === "clicked") {
