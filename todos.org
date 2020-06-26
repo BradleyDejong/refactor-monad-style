@@ -1,9 +1,12 @@
 * What we don't like/want to fix [0/3]
 
-** TODO UI [1/4]
-*** TODO make components composable (concat two components with same API)
+** TODO UI [3/5]
 *** TODO fix manually passing dispatch to each component
 *** TODO refactor into focused files
+*** DONE make components composable (concat two components with same API)
+    CLOSED: [2020-06-26 Fri 13:16]
+*** DONE figure out a parent-child relationship (=chain=)
+    CLOSED: [2020-06-26 Fri 13:17]
 *** DONE State [2/2]
     CLOSED: [2020-06-19 Fri 13:06]
 **** DONE fix manually passing state to each component
