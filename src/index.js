@@ -21,6 +21,12 @@ const View = (render) => ({
 
 View.empty = View((state, dispatch) => html``);
 
+const blink = (someView) =>
+  someView.map(
+    (someViewHtml) =>
+      html`<div style="animation: blink 300ms infinite;">${someViewHtml}</div>`
+  );
+
 const header = View(() => html`<h1>World's best app</h1>`);
 
 const renderRefresh = View(
@@ -50,8 +56,15 @@ const renderDecorations = View(
     <div class="decoration">
       insert decoration here
     </div>
-    <span class="decoration"> 🦄🦄🦄🦄🦄🦄 </span>
   `
+).concat(
+  blink(
+    View(
+      (state, dispatch) => html`
+        <span class="decoration"> 🦄🦄🦄🦄🦄🦄 </span>
+      `
+    )
+  )
 );
 
 const renderTotalClicks = View(
@@ -61,11 +74,6 @@ const renderTotalClicks = View(
   `
 );
 
-const makeBlinky = (someView) =>
-  someView.chain((someViewHtml) =>
-    View((state, dispatch) => html` <i>${someViewHtml}</i> `)
-  );
-
 const makeGreenText = (v) => {
   v.classList.add("mapclass");
   return v;
@@ -74,25 +82,29 @@ const makeGreenText = (v) => {
 const children = [
   renderRefresh.contramap((s) => s.lastUpdated),
   renderClicky.contramap((s) => s.clicks),
-  makeBlinky(renderDecorations.contramap((s) => undefined)).map(makeGreenText),
+  renderDecorations.contramap((s) => undefined),
   renderTotalClicks.contramap((s) => s.totalClicks),
 ];
 
 const contentViews = children.reduce(concat, View.empty);
 
-const content = contentViews.chain((allViewsHtml) =>
-  View(
-    (state, dispatch) => html`
+const content = contentViews.map(
+  (allViewsHtml) =>
+    html`
       <div id="content" class="content">
         ${allViewsHtml}
       </div>
     `
-  )
 );
 
-const wholeApp = header
-  .concat(content)
-  .chain((x) => View(() => html`<div id="app">${x}</div>`));
+const wholeApp = header.concat(content).chain((x) =>
+  View(
+    (state, dispatch) => html`<div id="app">
+      ${x}
+      <div class="debug">${JSON.stringify(state, undefined, 2)}</div>
+    </div>`
+  )
+);
 
 const reduce = (state, event) => {
   if (event === "clicked") {
