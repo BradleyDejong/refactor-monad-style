@@ -2,24 +2,20 @@ import html from "nanohtml";
 import nanomorph from "nanomorph";
 import { concat } from "ramda";
 
-const View = (render) => ({
-  render: render,
-  contramap: (adapterFn) =>
-    View((state, dispatch) => render(adapterFn(state), dispatch)),
-  concat: (otherView) =>
-    View(
-      (state, dispatch) => html`
-        ${render(state, dispatch)} ${otherView.render(state, dispatch)}
-      `
-    ),
-  chain: (otherViewFn) =>
-    View((state, dispatch) =>
-      otherViewFn(render(state, dispatch)).render(state, dispatch)
-    ),
-  map: (mapFn) => View((state, distach) => mapFn(render(state, dispatch))),
+import { View } from "./View";
+import { decorations, unicorns } from "./decorations";
+import { renderClicky } from "./click-tracker";
+
+const Fn = (run) => ({
+  map: (f) => Fn((ctx) => f(this.run(ctx))),
+  chain: (f) => Fn((ctx) => f(this.run(ctx)).run(ctx)),
+  concat: (other) => Fn((ctx) => run(ctx).concat(other.run(ctx))),
+  run,
 });
 
-View.empty = View((state, dispatch) => html``);
+Fn.of = (x) => Fn((ctx) => x);
+
+const env = process.env.NODE_ENV === "production" ? "prod" : "dev";
 
 const blink = (someView) =>
   someView.map(
@@ -27,7 +23,10 @@ const blink = (someView) =>
       html`<div style="animation: blink 300ms infinite;">${someViewHtml}</div>`
   );
 
-const header = View(() => html`<h1>World's best app</h1>`);
+const header = html`<h1>World's best app</h1>`;
+
+const debugLastUpdated = (d) =>
+  html`<strong style="position: fixed; bottom: 0; width: 100vw;">${d}</strong>`;
 
 const renderRefresh = View(
   (lastUpdated, dispatch) => html`
@@ -37,35 +36,12 @@ const renderRefresh = View(
     <button onclick=${() => dispatch("update")}>
       Click To Update
     </button>
+
+    ${env === "production" ? "" : debugLastUpdated(lastUpdated)}
   `
 );
 
-const renderClicky = View(
-  (clicks, dispatch) => html`
-    <div>
-      You've clicked ${clicks} times
-    </div>
-    <button onclick=${() => dispatch("clicked")}>
-      Click Me
-    </button>
-  `
-);
-
-const renderDecorations = View(
-  (state, dispatch) => html`
-    <div class="decoration">
-      insert decoration here
-    </div>
-  `
-).concat(
-  blink(
-    View(
-      (state, dispatch) => html`
-        <span class="decoration"> 🦄🦄🦄🦄🦄🦄 </span>
-      `
-    )
-  )
-);
+const renderDecorations = View.of(decorations).concat(blink(View.of(unicorns)));
 
 const renderTotalClicks = View(
   (totalClicks, dispatch) => html`
@@ -79,9 +55,13 @@ const makeGreenText = (v) => {
   return v;
 };
 
+const clickTracker = View((clicks, dispatch) =>
+  renderClicky(clicks, () => dispatch("clicked"))
+);
+
 const children = [
   renderRefresh.contramap((s) => s.lastUpdated),
-  renderClicky.contramap((s) => s.clicks),
+  clickTracker.contramap((s) => s.clicks),
   renderDecorations.contramap((s) => undefined),
   renderTotalClicks.contramap((s) => s.totalClicks),
 ];
@@ -97,14 +77,13 @@ const content = contentViews.map(
     `
 );
 
-const wholeApp = header.concat(content).chain((x) =>
-  View(
-    (state, dispatch) => html`<div id="app">
+const wholeApp = View.of(header)
+  .concat(content)
+  .chain((x) =>
+    View.of(html`<div id="app">
       ${x}
-      <div class="debug">${JSON.stringify(state, undefined, 2)}</div>
-    </div>`
-  )
-);
+    </div>`)
+  );
 
 const reduce = (state, event) => {
   if (event === "clicked") {

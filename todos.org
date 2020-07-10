@@ -1,8 +1,8 @@
 * What we don't like/want to fix [0/3]
 
 ** TODO UI [3/5]
-*** TODO fix manually passing dispatch to each component
 *** TODO refactor into focused files
+*** TODO fix manually passing dispatch to each component
 *** DONE make components composable (concat two components with same API)
     CLOSED: [2020-06-26 Fri 13:16]
 *** DONE figure out a parent-child relationship (=chain=)
