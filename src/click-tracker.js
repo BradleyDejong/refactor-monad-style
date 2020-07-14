@@ -8,3 +8,9 @@ export const renderClicky = (clicks, onClick) => html`
     Click Me
   </button>
 `;
+
+export const renderTotalClicks = (totalClicks, dispatch) => 
+  html`
+    <div>Total clicks:</div>
+    <div>${totalClicks}</div>
+  `;
