@@ -4,7 +4,7 @@ import { concat } from "ramda";
 
 import { View } from "./View";
 import { decorations, unicorns } from "./decorations";
-import { renderClicky } from "./click-tracker";
+import { renderClicky, renderTotalClicks } from "./click-tracker";
 
 const Fn = (run) => ({
   map: (f) => Fn((ctx) => f(this.run(ctx))),
@@ -43,12 +43,7 @@ const renderRefresh = View(
 
 const renderDecorations = View.of(decorations).concat(blink(View.of(unicorns)));
 
-const renderTotalClicks = View(
-  (totalClicks, dispatch) => html`
-    <div>Total clicks:</div>
-    <div>${totalClicks}</div>
-  `
-);
+const totalClicks = View(renderTotalClicks);
 
 const makeGreenText = (v) => {
   v.classList.add("mapclass");
@@ -63,7 +58,7 @@ const children = [
   renderRefresh.contramap((s) => s.lastUpdated),
   clickTracker.contramap((s) => s.clicks),
   renderDecorations.contramap((s) => undefined),
-  renderTotalClicks.contramap((s) => s.totalClicks),
+  totalClicks.contramap((s) => s.totalClicks),
 ];
 
 const contentViews = children.reduce(concat, View.empty);
