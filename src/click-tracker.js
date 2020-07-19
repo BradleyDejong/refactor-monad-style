@@ -1,13 +1,19 @@
 import html from "nanohtml";
+import { ask } from "./Reader";
+import { prop } from "ramda";
+import { View } from "./View";
 
-export const renderClicky = (clicks, onClick) => html`
+export const renderClicky = ask(prop("dispatch")).map((dispatch) =>
+                                                      View(
+                                                          (clicks) =>
+                                                          html`
   <div>
     You've clicked ${clicks} times
   </div>
-  <button onclick=${onClick}>
+  <button onclick=${() => dispatch("clicked")}>
     Click Me
   </button>
-`;
+`));
 
 export const renderTotalClicks = (totalClicks, dispatch) => 
   html`

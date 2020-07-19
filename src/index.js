@@ -5,17 +5,7 @@ import { concat, prop } from "ramda";
 import { View } from "./View";
 import { decorations, unicorns } from "./decorations";
 import { renderClicky, renderTotalClicks } from "./click-tracker";
-
-const Reader = (run) => ({
-  map: (f) => Reader((ctx) => f(run(ctx))),
-  chain: (f) => Reader((ctx) => f(run(ctx)).run(ctx)),
-  concat: (other) => Reader((ctx) => run(ctx).concat(other.run(ctx))),
-  run,
-});
-
-Reader.of = (x) => Reader((ctx) => x);
-Reader.ask = (q) => (q ? Reader((ctx) => q(ctx)) : Reader((ctx) => ctx));
-const { ask } = Reader;
+import { Reader, ask } from "./Reader.js";
 
 const blink = (someView) =>
   someView.map(
@@ -36,7 +26,6 @@ const debugLastUpdated = Reader((ctx) =>
       >`
   )
 );
-
 const renderRefresh = ask(prop("dispatch")).map((dispatch) =>
   View(
     (lastUpdated) => html`
@@ -62,15 +51,12 @@ const makeGreenText = (v) => {
 const readerWithAdapter = (adapterFn) => (r) =>
   r.map((v) => v.contramap(adapterFn));
 
-const clickTracker = View((clicks, dispatch) =>
-  renderClicky(clicks, () => dispatch("clicked"))
-);
 
 const children = [
   renderRefresh.map((v) => v.contramap((s) => s.lastUpdated)),
-  Reader.of(clickTracker.contramap((s) => s.clicks)),
+    renderClicky.map((v) => v.contramap((s) => s.clicks)),
   Reader.of(renderDecorations.contramap((s) => undefined)),
-  Reader.of(totalClicks.contramap((s) => s.totalClicks)),
+    Reader.of(totalClicks.contramap((s) => s.totalClicks))
 ];
 
 const contentViews = children.reduce(concat, Reader.of(View.empty));
