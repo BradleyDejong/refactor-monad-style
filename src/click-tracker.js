@@ -1,6 +1,6 @@
 import html from "nanohtml";
 
-export const renderClicky = (clicks, onClick) => html`
+export const clickCounter = (clicks, onClick) => html`
   <div>
     You've clicked ${clicks} times
   </div>
@@ -9,7 +9,7 @@ export const renderClicky = (clicks, onClick) => html`
   </button>
 `;
 
-export const renderTotalClicks = (totalClicks, dispatch) => 
+export const renderTotalClicks = (totalClicks) =>
   html`
     <div>Total clicks:</div>
     <div>${totalClicks}</div>

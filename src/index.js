@@ -4,18 +4,8 @@ import { concat, prop } from "ramda";
 
 import { View } from "./View";
 import { decorations, unicorns } from "./decorations";
-import { renderClicky, renderTotalClicks } from "./click-tracker";
-
-const Reader = (run) => ({
-  map: (f) => Reader((ctx) => f(run(ctx))),
-  chain: (f) => Reader((ctx) => f(run(ctx)).run(ctx)),
-  concat: (other) => Reader((ctx) => run(ctx).concat(other.run(ctx))),
-  run,
-});
-
-Reader.of = (x) => Reader((ctx) => x);
-Reader.ask = (q) => (q ? Reader((ctx) => q(ctx)) : Reader((ctx) => ctx));
-const { ask } = Reader;
+import { clickCounter, renderTotalClicks } from "./click-tracker";
+import { Reader, ask } from "./Reader.js";
 
 const blink = (someView) =>
   someView.map(
@@ -35,6 +25,10 @@ const debugLastUpdated = Reader((ctx) =>
         </button></strong
       >`
   )
+);
+
+const renderClickMe = ask(prop("dispatch")).map((dispatch) =>
+  View((clicks) => clickCounter(clicks, () => dispatch("clicked")))
 );
 
 const renderRefresh = ask(prop("dispatch")).map((dispatch) =>
@@ -62,13 +56,9 @@ const makeGreenText = (v) => {
 const readerWithAdapter = (adapterFn) => (r) =>
   r.map((v) => v.contramap(adapterFn));
 
-const clickTracker = View((clicks, dispatch) =>
-  renderClicky(clicks, () => dispatch("clicked"))
-);
-
 const children = [
   renderRefresh.map((v) => v.contramap((s) => s.lastUpdated)),
-  Reader.of(clickTracker.contramap((s) => s.clicks)),
+  renderClickMe.map((v) => v.contramap((s) => s.clicks)),
   Reader.of(renderDecorations.contramap((s) => undefined)),
   Reader.of(totalClicks.contramap((s) => s.totalClicks)),
 ];
@@ -121,11 +111,6 @@ const wholeApp = Reader.of(View.of(header))
         </div>`)
       )
     );
-  })
-  .run({
-    env: process.env.NODE_ENV === "production" ? "prod" : "dev",
-    dispatch,
-    title: "World's best app",
   });
 
 const reduce = (state, event) => {
@@ -156,6 +141,15 @@ const state = {
 };
 
 const rerender = (state, dispatch) =>
-  nanomorph(app, wholeApp.render(state, dispatch));
+  nanomorph(
+    app,
+    wholeApp
+      .run({
+        env: process.env.NODE_ENV === "production" ? "prod" : "dev",
+        dispatch,
+        title: "World's best app",
+      })
+      .render(state)
+  );
 
 rerender(state, dispatch); // start the app

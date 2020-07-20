@@ -2,20 +2,13 @@ import html from "nanohtml";
 
 export const View = (render) => ({
   render: render,
-  contramap: (adapterFn) =>
-    View((state, dispatch) => render(adapterFn(state), dispatch)),
+  contramap: (adapterFn) => View((state) => render(adapterFn(state))),
   concat: (otherView) =>
-    View(
-      (state, dispatch) => html`
-        ${render(state, dispatch)} ${otherView.render(state, dispatch)}
-      `
-    ),
+    View((state) => html` ${render(state)} ${otherView.render(state)} `),
   chain: (otherViewFn) =>
-    View((state, dispatch) =>
-      otherViewFn(render(state, dispatch)).render(state, dispatch)
-    ),
-  map: (mapFn) => View((state, dispatch) => mapFn(render(state, dispatch))),
+    View((state) => otherViewFn(render(state)).render(state)),
+  map: (mapFn) => View((state) => mapFn(render(state))),
 });
 
-View.empty = View((state, dispatch) => html``);
-View.of = (val) => View((state, dispatch) => val);
+View.empty = View((state) => html``);
+View.of = (val) => View((state) => val);
