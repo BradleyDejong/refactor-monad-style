@@ -4,7 +4,7 @@ import { concat, prop } from "ramda";
 
 import { View } from "./View";
 import { decorations, unicorns } from "./decorations";
-import { renderClicky, renderTotalClicks } from "./click-tracker";
+import { clickCounter, renderTotalClicks } from "./click-tracker";
 import { Reader, ask } from "./Reader.js";
 
 const blink = (someView) =>
@@ -26,6 +26,11 @@ const debugLastUpdated = Reader((ctx) =>
       >`
   )
 );
+
+const renderClickMe = ask(prop("dispatch")).map((dispatch) =>
+  View((clicks) => clickCounter(clicks, () => dispatch("clicked")))
+);
+
 const renderRefresh = ask(prop("dispatch")).map((dispatch) =>
   View(
     (lastUpdated) => html`
@@ -51,12 +56,11 @@ const makeGreenText = (v) => {
 const readerWithAdapter = (adapterFn) => (r) =>
   r.map((v) => v.contramap(adapterFn));
 
-
 const children = [
   renderRefresh.map((v) => v.contramap((s) => s.lastUpdated)),
-    renderClicky.map((v) => v.contramap((s) => s.clicks)),
+  renderClickMe.map((v) => v.contramap((s) => s.clicks)),
   Reader.of(renderDecorations.contramap((s) => undefined)),
-    Reader.of(totalClicks.contramap((s) => s.totalClicks))
+  Reader.of(totalClicks.contramap((s) => s.totalClicks)),
 ];
 
 const contentViews = children.reduce(concat, Reader.of(View.empty));
@@ -107,11 +111,6 @@ const wholeApp = Reader.of(View.of(header))
         </div>`)
       )
     );
-  })
-  .run({
-    env: process.env.NODE_ENV === "production" ? "prod" : "dev",
-    dispatch,
-    title: "World's best app",
   });
 
 const reduce = (state, event) => {
@@ -142,6 +141,15 @@ const state = {
 };
 
 const rerender = (state, dispatch) =>
-  nanomorph(app, wholeApp.render(state, dispatch));
+  nanomorph(
+    app,
+    wholeApp
+      .run({
+        env: process.env.NODE_ENV === "production" ? "prod" : "dev",
+        dispatch,
+        title: "World's best app",
+      })
+      .render(state)
+  );
 
 rerender(state, dispatch); // start the app
