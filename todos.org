@@ -1,7 +1,8 @@
 * What we don't like/want to fix [0/3]
 
-** TODO UI [5/6]
-*** TODO refactor into focused files
+** TODO UI [6/6]
+*** DONE refactor into focused files
+    CLOSED: [2020-07-24 Fri 12:45]
 *** DONE refactor all child components to use Reader (when needed)
     CLOSED: [2020-07-19 Sun 21:54]
 *** DONE fix manually passing dispatch to each component

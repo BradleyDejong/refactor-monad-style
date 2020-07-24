@@ -86,6 +86,7 @@ const wholeApp = Reader.of(View.of(contentHeaderHtml))
     );
   });
 
+// (AppState, Action) -> AppState
 const reduce = (state, event) => {
   console.log("EVENT", event);
   if (event === "clicked") {
