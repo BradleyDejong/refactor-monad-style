@@ -5,26 +5,18 @@ import { concat, prop } from "ramda";
 import { View } from "./View";
 import { decorations, unicorns } from "./decorations";
 import { clickCounter, renderTotalClicks } from "./click-tracker";
-import { Reader, ask } from "./Reader.js";
+import { headerTitleHtml, headerHtml } from "./header";
+import { contentHtml } from "./content";
+import { refreshHtml } from "./refresh";
+import { refreshDebugHtml } from "./refresh-debug";
+import { blinkHtml } from "./blink";
 
-const blink = (someView) =>
-  someView.map(
-    (someViewHtml) =>
-      html`<div style="animation: blink 300ms infinite;">${someViewHtml}</div>`
-  );
+import { Reader, ask } from "./Reader.js";
 
 const header = html`<h1>World's best app</h1>`;
 
 const debugLastUpdated = Reader((ctx) =>
-  View(
-    (d) =>
-      html`<strong style="position: fixed; bottom: 0; width: 100vw;"
-        >${d}
-        <button onclick=${() => ctx.dispatch("Debug clicked")}>
-          Debug Mode
-        </button></strong
-      >`
-  )
+  View((d) => refreshDebugHtml(d, () => dispatch("Debug Clicked")))
 );
 
 const renderClickMe = ask(prop("dispatch")).map((dispatch) =>
@@ -32,17 +24,10 @@ const renderClickMe = ask(prop("dispatch")).map((dispatch) =>
 );
 
 const renderRefresh = ask(prop("dispatch")).map((dispatch) =>
-  View(
-    (lastUpdated) => html`
-      <div>
-        Last updated at ${lastUpdated.toLocaleString()}.
-      </div>
-      <button onclick=${() => dispatch("update")}>
-        Click To Update
-      </button>
-    `
-  )
+  View((lastUpdated) => refreshHtml(lastUpdated, () => dispatch("update")))
 );
+
+const blink = (someView) => someView.map(blinkHtml);
 
 const renderDecorations = View.of(decorations).concat(blink(View.of(unicorns)));
 
@@ -65,33 +50,17 @@ const children = [
 
 const contentViews = children.reduce(concat, Reader.of(View.empty));
 
-const content = contentViews.map((v) =>
-  v.map(
-    (allViewsHtml) =>
-      html`
-        <div id="content" class="content">
-          ${allViewsHtml}
-        </div>
-      `
-  )
-);
+const content = contentViews.map((v) => v.map(contentHtml));
 
 const debug = Reader((ctx) => ctx.env === "prod").chain((isProd) =>
   isProd ? Reader.of(View.empty) : debugLastUpdated
 );
 
-const headerReader = ask(prop("title")).map((title) => View.of(html`${title}`));
-
-const appHeader = headerReader.map((r) =>
-  r.map(
-    (v) =>
-      html`
-        <header style="position: fixed; top: 0; left: 50%; margin-left: -50%;">
-          ${v}
-        </header>
-      `
-  )
+const headerReader = ask(prop("title")).map((title) =>
+  View.of(headerTitleHtml(title))
 );
+
+const appHeader = headerReader.map((r) => r.map(headerHtml));
 
 const dispatch = (event) => {
   const newState = reduce(state, event);
