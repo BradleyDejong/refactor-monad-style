@@ -1,8 +1,13 @@
+// Third Party Imports
 import html from "nanohtml";
 import nanomorph from "nanomorph";
 import { concat, prop } from "ramda";
 
+// Type Imports
 import { View } from "./View";
+import { Reader, ask } from "./Reader.js";
+
+// HTML Imports
 import { decorations, unicorns } from "./decorations";
 import { clickCounter, renderTotalClicks } from "./click-tracker";
 import { headerTitleHtml, headerHtml } from "./header";
@@ -10,13 +15,12 @@ import { contentHtml } from "./content";
 import { refreshHtml } from "./refresh";
 import { refreshDebugHtml } from "./refresh-debug";
 import { blinkHtml } from "./blink";
+import { contentHeaderHtml } from "./content-header";
 
-import { Reader, ask } from "./Reader.js";
 
-const header = html`<h1>World's best app</h1>`;
 
 const debugLastUpdated = Reader((ctx) =>
-  View((d) => refreshDebugHtml(d, () => dispatch("Debug Clicked")))
+  View((d) => refreshDebugHtml(d, () => ctx.dispatch("Debug Clicked")))
 );
 
 const renderClickMe = ask(prop("dispatch")).map((dispatch) =>
@@ -62,13 +66,13 @@ const headerReader = ask(prop("title")).map((title) =>
 
 const appHeader = headerReader.map((r) => r.map(headerHtml));
 
-const dispatch = (event) => {
+const dispatchGlobal = (event) => {
   const newState = reduce(state, event);
   Object.assign(state, newState);
-  rerender(state, dispatch);
+  rerender(state, dispatchGlobal);
 };
 
-const wholeApp = Reader.of(View.of(header))
+const wholeApp = Reader.of(View.of(contentHeaderHtml))
   .concat(content)
   .concat(debug.map((v) => v.contramap((s) => s.lastUpdated)))
   .concat(appHeader)
@@ -82,6 +86,7 @@ const wholeApp = Reader.of(View.of(header))
     );
   });
 
+// (AppState, Action) -> AppState
 const reduce = (state, event) => {
   console.log("EVENT", event);
   if (event === "clicked") {
@@ -121,4 +126,4 @@ const rerender = (state, dispatch) =>
       .render(state)
   );
 
-rerender(state, dispatch); // start the app
+rerender(state, dispatchGlobal); // start the app
