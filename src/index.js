@@ -17,8 +17,6 @@ import { refreshDebugHtml } from "./refresh-debug";
 import { blinkHtml } from "./blink";
 import { contentHeaderHtml } from "./content-header";
 
-
-
 const debugLastUpdated = Reader((ctx) =>
   View((d) => refreshDebugHtml(d, () => ctx.dispatch("Debug Clicked")))
 );
@@ -86,24 +84,49 @@ const wholeApp = Reader.of(View.of(contentHeaderHtml))
     );
   });
 
-// (AppState, Action) -> AppState
+const Endo = (run) => ({
+  run,
+  concat: (otherEndo) => Endo((a) => otherEndo.run(run(a))),
+});
+
+Endo.empty = Endo((x) => x);
+
+const reducer1 = Reader((action) =>
+  Endo((state) =>
+    action === "clicked"
+      ? {
+          ...state,
+          clicks: state.clicks + 1,
+        }
+      : state
+  )
+);
+
+const reducer2 = Reader((action) =>
+  Endo((state) =>
+    action === "update"
+      ? {
+          ...state,
+          lastUpdated: new Date(),
+        }
+      : state
+  )
+);
+
+const actionCounter = (state) => ({
+  ...state,
+  totalClicks: state.totalClicks + 1,
+});
+
+const allOurReducers = [reducer1, reducer2, Reader.of(Endo(actionCounter))];
+
 const reduce = (state, event) => {
   console.log("EVENT", event);
-  if (event === "clicked") {
-    return {
-      ...state,
-      clicks: state.clicks + 1,
-      totalClicks: state.totalClicks + 1,
-    };
-  } else if (event === "update") {
-    return {
-      ...state,
-      lastUpdated: new Date(),
-      totalClicks: state.totalClicks + 1,
-    };
-  }
 
-  return state;
+  return allOurReducers
+    .reduce(concat, Reader.of(Endo.empty))
+    .run(event) // Runs the reader
+    .run(state); // Runs the Endo
 };
 
 // IMPURE
