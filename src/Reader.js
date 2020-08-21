@@ -1,4 +1,13 @@
 // Reader.js
+
+// Reader a b
+// a -> b
+
+// Reader a        b
+// Reader AppState (View HTML)              -- VIEWS
+// Reader Action   (Endo AppState)          -- REDUCERS
+// Reader Action   (Array (Promise Action)) -- EFFECTS
+
 export const Reader = (run) => ({
   map: (f) => Reader((ctx) => f(run(ctx))),
   chain: (f) => Reader((ctx) => f(run(ctx)).run(ctx)),

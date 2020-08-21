@@ -126,6 +126,8 @@ const quoteReducer = Reader((action) =>
   )
 );
 
+// AppState -> AppState
+// Endo AppState
 const actionCounter = (state) => ({
   ...state,
   totalClicks: state.totalClicks + 1,
@@ -166,37 +168,52 @@ const rerender = (state, dispatch) =>
       .render(state)
   );
 
-const updateState = (event) => {
-  const newState = reduce(state, event);
-  Object.assign(state, newState);
-};
-
-// action1 :: Action -> Promise Action
-const action1 = (e) =>
-  e === "QUOTE"
+// effect1 :: Action -> Array (Promise Action)
+const effect1 = (action) =>
+  action === "QUOTE"
     ? [
         fetch("https://api.quotable.io/random")
           .then((res) => res.json())
           .then((body) => {
             const quote = body.content;
-            console.log("GOT QUOTE", quote);
-
             return { type: "QUOTE_UPDATED", quote };
           }),
       ]
     : [];
 
-const runEffects = (event) => {
-  return action1(event);
+// effect2 :: Action -> Array (Promise Action)
+const effect2 = (action) => {
+  console.log("GOT ACTION", action);
+  return [];
 };
 
-const dispatchGlobal = (event) => {
-  console.log("EVENT", event);
-  updateState(event);
-  const nextActions = runEffects(event, dispatchGlobal);
-
-  nextActions.forEach((p) => p.then(dispatchGlobal));
+// updateDom :: Action -> Array (Promise Action)
+const updateDom = (action) => {
+  updateState(action);
   rerender(state, dispatchGlobal);
+  return [];
+};
+
+const foldMap = (foldable, semigroup, empty) =>
+  foldable.map(semigroup).reduce(concat, empty);
+
+const allEffects = foldMap(
+  [effect1, effect2, updateDom],
+  Reader,
+  Reader.of([])
+);
+
+//.reduce(concat, Reader.of([]));
+const runEffects = (action) => allEffects.run(action);
+
+const updateState = (event) => {
+  const newState = reduce(state, event);
+  Object.assign(state, newState);
+};
+
+const dispatchGlobal = (action) => {
+  const nextActions = runEffects(action);
+  nextActions.forEach((p) => p.then(dispatchGlobal));
 };
 
 rerender(state, dispatchGlobal); // start the app
