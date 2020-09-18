@@ -7,6 +7,8 @@ import { concat, prop } from "ramda";
 import { View } from "./View";
 import { Reader, ask } from "./Reader.js";
 
+import { initialState, selectors, setLastUpdated } from "./state";
+
 // HTML Imports
 import { decorations, unicorns } from "./decorations";
 import { clickCounter, renderTotalClicks } from "./click-tracker";
@@ -54,7 +56,7 @@ const quoteView = ask(prop("dispatch")).map((d) =>
 );
 
 const children = [
-  renderRefresh.map((v) => v.contramap((s) => s.lastUpdated)),
+  renderRefresh.map((v) => v.contramap(selectors.lastUpdated)),
   renderClickMe.map((v) => v.contramap((s) => s.clicks)),
   Reader.of(renderDecorations.contramap((s) => undefined)),
   Reader.of(totalClicks.contramap((s) => s.totalClicks)),
@@ -77,7 +79,7 @@ const appHeader = headerReader.map((r) => r.map(headerHtml));
 
 const wholeApp = Reader.of(View.of(contentHeaderHtml))
   .concat(content)
-  .concat(debug.map((v) => v.contramap((s) => s.lastUpdated)))
+  .concat(debug.map((v) => v.contramap(selectors.lastUpdated)))
   .concat(appHeader)
   .chain((x) => {
     return Reader.of(
@@ -109,12 +111,7 @@ const reducer1 = Reader((action) =>
 
 const reducer2 = Reader((action) =>
   Endo((state) =>
-    action === "update"
-      ? {
-          ...state,
-          lastUpdated: new Date(),
-        }
-      : state
+    action === "update" ? setLastUpdated(new Date(), state) : state
   )
 );
 
@@ -149,12 +146,7 @@ const reduce = (state, event) => {
 
 // IMPURE
 const app = document.getElementById("app");
-const state = {
-  lastUpdated: new Date(),
-  clicks: 0,
-  totalClicks: 0,
-  quote: "Ken is the best. -Ryan",
-};
+const state = initialState;
 
 const rerender = (state, dispatch) =>
   nanomorph(
@@ -168,8 +160,8 @@ const rerender = (state, dispatch) =>
       .render(state)
   );
 
-// effect1 :: Action -> Array (Promise Action)
-const effect1 = (action) =>
+// getQuoteEffect :: Action -> Array (Promise Action)
+const getQuoteEffect = (action) =>
   action === "QUOTE"
     ? [
         fetch("https://api.quotable.io/random")
@@ -181,8 +173,8 @@ const effect1 = (action) =>
       ]
     : [];
 
-// effect2 :: Action -> Array (Promise Action)
-const effect2 = (action) => {
+// loggingEffect :: Action -> Array (Promise Action)
+const loggingEffect = (action) => {
   console.log("GOT ACTION", action);
   return [];
 };
@@ -198,7 +190,7 @@ const foldMap = (foldable, semigroup, empty) =>
   foldable.map(semigroup).reduce(concat, empty);
 
 const allEffects = foldMap(
-  [effect1, effect2, updateDom],
+  [getQuoteEffect, loggingEffect, updateDom],
   Reader,
   Reader.of([])
 );
